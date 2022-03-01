@@ -35,6 +35,11 @@ fn read_or_generate_input(len: usize, modulus: i32) -> Vec<i32> {
         for _ in 0..len {
             input.push(rng.gen::<i32>() % modulus);
         }
+        // Try to make the position of the pivot after partitioning
+        // is under 12.5% (1/8th) percentile(or over 87.5% percentile).
+        let unbalanced_pivot_idx = len / 8 - 5;
+        input.select_nth_unstable(unbalanced_pivot_idx);
+        input.swap(unbalanced_pivot_idx, len / 2);
         let encoded = bincode::serialize(&input).unwrap();
         new_file.write_all(&encoded).unwrap();
     }
@@ -54,7 +59,7 @@ fn sort_unstable(input: &[i32], tmp: &mut [i32]) {
 }
 
 fn benchmark_sort_unstable(c: &mut Criterion) {
-    for len in [25, 500] {
+    for len in [50, 500, 5000] {
         for modulus in [5, 10, 100, 1000] {
             let input = read_or_generate_input(len, modulus);
             let mut tmp = vec![0; input.len()];
@@ -72,7 +77,7 @@ fn benchmark_sort_unstable(c: &mut Criterion) {
 
 criterion_group! {
     name = benches;
-    config = Criterion::default().sample_size(5000);
+    config = Criterion::default().sample_size(2500);
     targets = benchmark_sort_unstable
 }
 criterion_main!(benches);
